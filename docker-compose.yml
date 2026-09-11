@@ -1,36 +1,54 @@
 services:
   db:
     image: postgres:16
+    restart: unless-stopped
     environment:
       POSTGRES_USER: calorie
       POSTGRES_PASSWORD: calorie
       POSTGRES_DB: calorie
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U calorie -d calorie"]
       interval: 5s
       timeout: 5s
       retries: 20
+      start_period: 10s
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    environment:
-      DATABASE_URL: postgresql+psycopg2://calorie:calorie@db:5432/calorie
-      NUTRITION_API_KEY: ${NUTRITION_API_KEY}
-      JWT_SECRET: ${JWT_SECRET:-dev-insecure-secret-change-me}
-      APP_HOST: 0.0.0.0
-      APP_PORT: 8080
-      STATIC_DIR: /app/backend/static
-    ports:
-      # host_port:container_port - QA connects to http://127.0.0.1:8080
-      - "8080:8080"
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
-    restart: unless-stopped
+    environment:
+      # Alembic migrations run against this URL on startup.
+      DATABASE_URL: postgresql+psycopg2://calorie:calorie@db:5432/calorie
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRES_MINUTES: ${JWT_EXPIRES_MINUTES:-10080}
+      # Sourced from the host environment / GitHub secret. Server-side only.
+      NUTRITION_API_KEY: ${NUTRITION_API_KEY}
+      # Bind 0.0.0.0 so the port mapping below is reachable from the host.
+      # HOST/PORT and APP_HOST/APP_PORT are both set so the service works with
+      # either entrypoint convention used in this repo.
+      HOST: 0.0.0.0
+      PORT: 8080
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8080
+      APP_MODULE: app.main:app
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+    ports:
+      # host:container - the API and the SPA are both served on 8080.
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
 volumes:
-  pgdata:
+  postgres_data:
