@@ -1,0 +1,13 @@
+Alembic migration environment for the calorie tracker.
+
+The database URL is read from the DATABASE_URL environment variable (see env.py);
+alembic.ini deliberately leaves sqlalchemy.url blank.
+
+Usage (from the ``backend/`` directory):
+
+    alembic upgrade head                        # apply all migrations
+    alembic downgrade -1                        # roll back one revision
+    alembic revision --autogenerate -m "msg"    # create a new revision
+
+Migrations are executed automatically on backend container startup before the
+API begins serving traffic.
