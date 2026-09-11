@@ -1,0 +1,21 @@
+# --- web framework -------------------------------------------------------- #
+fastapi>=0.111,<1.0
+uvicorn[standard]>=0.30,<1.0
+pydantic>=2.7,<3.0
+email-validator>=2.1,<3.0
+python-multipart>=0.0.9
+
+# --- auth ----------------------------------------------------------------- #
+passlib[bcrypt]>=1.7.4,<2.0
+# passlib 1.7.4 is incompatible with bcrypt >= 5 (it calls the removed
+# `bcrypt.__about__` and trips the 72-byte guard during backend detection).
+bcrypt>=4.0.1,<4.3.0
+python-jose[cryptography]>=3.3.0,<4.0
+
+# --- http client (FDC proxy) ---------------------------------------------- #
+httpx>=0.27,<1.0
+
+# --- database ------------------------------------------------------------- #
+SQLAlchemy>=2.0.30,<3.0
+alembic>=1.13.1,<2.0
+psycopg2-binary>=2.9.9,<3.0
