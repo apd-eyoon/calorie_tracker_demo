@@ -1,0 +1,1 @@
+# Placeholder so the Docker build context always has backend/ (the API layer fills it in).
