@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: calorie
+      POSTGRES_PASSWORD: calorie
+      POSTGRES_DB: calorie
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U calorie -d calorie"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg2://calorie:calorie@db:5432/calorie
+      NUTRITION_API_KEY: ${NUTRITION_API_KEY}
+      JWT_SECRET: ${JWT_SECRET:-dev-insecure-secret-change-me}
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8080
+      STATIC_DIR: /app/backend/static
+    ports:
+      # host_port:container_port - QA connects to http://127.0.0.1:8080
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
